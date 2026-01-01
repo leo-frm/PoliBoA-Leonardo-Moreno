@@ -18,7 +18,7 @@ function build_scmap(bp :: BasinProblem)
     # Define o problema de EDO para integração de cada centro de célula
     ode_problem = ODEProblem(
         bp.f,
-        zero(Float64, length(bp.region.elements)),
+        zeros(Float64, length(bp.region.elements)),
         (0.0, bp.period * bp.maximum_cycles),
         bp.params,
     )
