@@ -10,23 +10,6 @@ using Colors
 using Distributed
 using ProgressMeter
 
-# Mapa célula‑a‑célula: para cada célula i, guarda-se o número da célula destino
-mutable struct SimpleCellMap # Configura o mapa que armazena células e seus respectivos destinos
-    target :: Vector{Int64} #target[i]: destino da célula i
-    computed_cells :: Int64 #contador das células calculadas
-    range :: BasinRegion
-end
-
-# Construtor: inicializa mapeamento vazio
-function SimpleCellMap(region::BasinRegion)
-    total_cells = prod(region.elements)
-    return SimpleCellMap(
-        zeros(Int64, total_cells),
-        0,
-        region,
-    )
-end
-
 #Funções base
 mutable struct BasinRegion # Configura a região onde as bacias serão encontradas
     range :: Vector{Vector{Float64}} #Vetores que delimitam o espaço onde as bacias serão encontradas
@@ -65,4 +48,21 @@ mutable struct BasinResult #Resultado da análise de bacias
     cells #Número do atrator de cada célula
     attractors :: Vector{Attractor} #Lista de atratores encontrados
     region :: BasinRegion #Região analisada
+end
+
+# Mapa célula‑a‑célula: para cada célula i, guarda-se o número da célula destino
+mutable struct SimpleCellMap # Configura o mapa que armazena células e seus respectivos destinos
+    target :: Vector{Int64} #target[i]: destino da célula i
+    computed_cells :: Int64 #contador das células calculadas
+    range :: BasinRegion
+end
+
+# Construtor: inicializa mapeamento vazio
+function SimpleCellMap(region::BasinRegion)
+    total_cells = prod(region.elements)
+    return SimpleCellMap(
+        zeros(Int64, total_cells),
+        0,
+        region,
+    )
 end
