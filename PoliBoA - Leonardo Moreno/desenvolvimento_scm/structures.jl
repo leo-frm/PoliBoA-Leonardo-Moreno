@@ -27,7 +27,7 @@ function SimpleCellMap(region::BasinRegion)
     )
 end
 
-""" Funções base
+#Funções base
 mutable struct BasinRegion # Configura a região onde as bacias serão encontradas
     range :: Vector{Vector{Float64}} #Vetores que delimitam o espaço onde as bacias serão encontradas
     elements :: Vector{Int64} #Número de células (divisões) nesse espaço
@@ -66,4 +66,3 @@ mutable struct BasinResult #Resultado da análise de bacias
     attractors :: Vector{Attractor} #Lista de atratores encontrados
     region :: BasinRegion #Região analisada
 end
-"""

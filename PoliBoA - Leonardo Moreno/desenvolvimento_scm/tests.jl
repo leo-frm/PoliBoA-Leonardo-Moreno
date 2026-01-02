@@ -10,11 +10,10 @@ using Colors
 using Distributed
 using ProgressMeter
 
-include("utils.jl")
 include("structures.jl")
+include("utils.jl")
 include("milestone1.jl")
 include("milestone2.jl")
-
 
 # Helmholtz-Duffing
 function helmholtz_duffing!(du, u, (a,b,c,d,e,ω), t)
@@ -149,3 +148,6 @@ function test_scm_spring_column(divs; omega=0.0)
     display(plt)
     writedlm("scm_basin_sc.csv", result.cells, ',')
 end
+
+test_scm_helmduff(200)
+#test_scm_spring_column(200)
