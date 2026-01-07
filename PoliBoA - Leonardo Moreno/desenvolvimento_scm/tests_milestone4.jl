@@ -98,7 +98,7 @@ function plotbasins(result::BasinResult)
 end
 
 # Benchmark functions for parallel testing
-function bench_scm_helmduff_p(divs; e=0.077, verbose=true, threads=1)
+function bench_scm_helmduff_p(divs; e=0.077, verbose=false, threads=1)
     region = BasinRegion(
         [[-1.2, 1.5], [-1.5, 1.5]], 
         [divs, floor(Int64,(3.0/2.7)*divs)],
@@ -129,7 +129,7 @@ function bench_scm_helmduff_p(divs; e=0.077, verbose=true, threads=1)
     return result
 end
 
-function bench_scm_spring_column_p(divs; omega=0.0, verbose=true, threads=1)
+function bench_scm_spring_column_p(divs; omega=0.0, verbose=false, threads=1)
     region = BasinRegion(
         [[-3.14, 3.14], [-1.3, 1.3]], 
         [divs, divs],
