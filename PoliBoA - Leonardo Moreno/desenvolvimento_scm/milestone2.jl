@@ -1,18 +1,7 @@
-using Accessors
-using DifferentialEquations
-using Plots
-using PlotThemes
-using Plots.PlotMeasures
-using DelimitedFiles
-using LaTeXStrings
-using Printf
-using Colors
-using Distributed
-using ProgressMeter
-
 # celula 1 -> 32 : 1 esta 0? esta em 0, 1 recebe 1, 32 esta em 0? recebe 1 também.
 # capturar retornos na própria trajetória
 # definir os pontos do atrator
+# adicionar definição para trajetórias que atingem max_steps
 
 function find_attractors_from_scm(scm::SimpleCellMap, bp::BasinProblem) :: BasinResult
     grid = zeros(Int64, Tuple(bp.region.elements))
@@ -73,6 +62,16 @@ function find_attractors_from_scm(scm::SimpleCellMap, bp::BasinProblem) :: Basin
             # Marcam-se todas as células visitadas como pertencendo ao novo atrator encontrado
 
             current = next_cell
+        end
+        if length(trajectory) > 0 && grid[trajectory[1]] == 0
+            # Classifica como quasi-periódico ou divergente
+            foreach(c -> grid[c] = next_attractor_id, trajectory)
+            push!(attractors, make_attractor_from_cells(
+                    attractor_cells,
+                    number = next_attractor_id,
+                    type = attractor_type,
+                    region = bp.region))
+            next_attractor_id += 1
         end
     end
 

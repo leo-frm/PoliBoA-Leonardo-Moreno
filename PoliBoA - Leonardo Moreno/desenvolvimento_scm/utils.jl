@@ -1,5 +1,3 @@
-using DifferentialEquations
-
 function get_cell_number(u, region::BasinRegion) :: Int64 #Retorna o número da célula correspondente às entradas: valores u e região da bacia
     # Initialize cell
     cell = 0
@@ -46,7 +44,7 @@ function is_inside_range(pos, range) #Verifica se os valores de pos estão dentr
     return reduce(&, [is_inside(p, r) for (p, r) in zip(pos, range)])
 end
 
-function set_integrator!(integrator; u::Vector{Float64}=nothing, t::Float64=nothing)
+function set_integrator!(integrator; u=nothing, t=nothing)
     if u !== nothing
         set_u!(integrator, u)
         u_modified!(integrator, true)

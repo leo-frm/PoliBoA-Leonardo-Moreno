@@ -1,15 +1,3 @@
-using Accessors
-using DifferentialEquations
-using Plots
-using PlotThemes
-using Plots.PlotMeasures
-using DelimitedFiles
-using LaTeXStrings
-using Printf
-using Colors
-using Distributed
-using ProgressMeter
-
 #Funções base
 mutable struct BasinRegion # Configura a região onde as bacias serão encontradas
     range :: Vector{Vector{Float64}} #Vetores que delimitam o espaço onde as bacias serão encontradas

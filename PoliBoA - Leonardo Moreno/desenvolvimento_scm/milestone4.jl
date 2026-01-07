@@ -31,7 +31,6 @@ function process_cell_range(
     return scm_local
 end
 
-function join_scmaps!(scm_a::SimpleCellMap, scm_b::SimpleCellMap) :: SimpleCellMap
     """
     Une dois SimpleCellMaps copiando os valores não-zero de scm_b para scm_a.
     
@@ -40,7 +39,7 @@ function join_scmaps!(scm_a::SimpleCellMap, scm_b::SimpleCellMap) :: SimpleCellM
     - scm_b.target[i] != 0 → célula foi processada em scm_b
     - Copia o valor de scm_b para scm_a
     """
-    
+function join_scmaps!(scm_a::SimpleCellMap, scm_b::SimpleCellMap) :: SimpleCellMap
     total_cells = length(scm_a.target)
     
     for cell in 1:total_cells
@@ -80,7 +79,7 @@ function build_scmap_parallel(bp :: BasinProblem)
             scm.target[cell] = compute_single_cell_mapping(cell, integrator, bp)
             scm.computed_cells += 1 # computed_cells? paralelizavel no futuro -> passa um range
         end
-
+        return scm
     # Multiple threads
     else
         # Divide the ranges for the especified number of threads
@@ -89,7 +88,7 @@ function build_scmap_parallel(bp :: BasinProblem)
             ceil(Int64, total_cells / bp.threads)
         )
         # Creates the tasks to be used (based on the number of threads)
-        tasks = map(cr -> Threads.@spawn(process_cell_range_ccm_style(cr, bp)), cell_ranges)
+        tasks = map(cr -> Threads.@spawn(process_cell_range(cr, bp)), cell_ranges)
         # Fetch the results of each thread
         results = map(t -> fetch(t), tasks)
         # results = [scm₁, scm₂, scm₃, scm₄] 
@@ -97,4 +96,36 @@ function build_scmap_parallel(bp :: BasinProblem)
         scm = foldl(join_scmaps!, results) 
         return scm
     end
+end
+
+# Computa o destino de uma única célula via integração da EDO
+function compute_single_cell_mapping( 
+    cell_id::Int64, 
+    integrator, 
+    bp::BasinProblem
+) :: Int64
+    u = zeros(Float64, length(bp.region.elements))
+    store_cell_center!(u, cell_id, bp.region)
+
+    set_integrator!(integrator; u, t=0.0)
+    step!(integrator, bp.period * bp.transient_cycles, true)
+
+    set_integrator!(integrator; u=integrator.u, t=0.0)
+    step!(integrator, bp.period, true)
+
+    adjust_cyclic(integrator.u, bp.region.range, bp.region.is_cyclic)
+
+    # Se o ponto final saiu da região estendida → divergência
+    if !is_inside_range(integrator.u, bp.region.extended_range)
+        return -1
+    end
+
+    # Se está dentro da estendida mas fora da região principal → fora da bacia (Na verdade, integra por um novo periodo de ciclos para tomar a decisão se ainda esta fora da bacia ou se realmente divergiu)
+    if !is_inside_range(integrator.u, bp.region.range)
+        return -2
+    end
+    
+    # Caso geral: determina a célula destino
+    target_cell = get_cell_number(integrator.u, bp.region)
+    return target_cell
 end

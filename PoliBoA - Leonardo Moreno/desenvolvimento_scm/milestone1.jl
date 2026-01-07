@@ -1,15 +1,3 @@
-using Accessors
-using DifferentialEquations
-using Plots
-using PlotThemes
-using Plots.PlotMeasures
-using DelimitedFiles
-using LaTeXStrings
-using Printf
-using Colors
-using Distributed
-using ProgressMeter
-
 # Constrói o mapa célula‑a‑célula integrando um ponto de cada célula
 function build_scmap(bp :: BasinProblem)
     scm = SimpleCellMap(bp.region)

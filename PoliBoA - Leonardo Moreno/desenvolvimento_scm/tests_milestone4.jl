@@ -119,7 +119,7 @@ function bench_scm_helmduff_p(divs; e=0.077, verbose=false, threads=1)
     )
 
     println(">>> Running SCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid ($(threads) thread$(threads>1 ? "s" : ""))")
-    scm = build_scmap(bp)
+    scm = build_scmap_parallel(bp)
     @time result = find_attractors_from_scm(scm, bp)
 
     if verbose
@@ -150,7 +150,7 @@ function bench_scm_spring_column_p(divs; omega=0.0, verbose=false, threads=1)
     )
 
     println(">>> Running SCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid ($(threads) thread$(threads>1 ? "s" : ""))")
-    scm = build_scmap(bp)
+    scm = build_scmap_parallel(bp)
     @time result = find_attractors_from_scm(scm, bp)
 
     if verbose
