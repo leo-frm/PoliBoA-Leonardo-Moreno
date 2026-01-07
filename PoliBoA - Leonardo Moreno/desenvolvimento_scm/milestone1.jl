@@ -72,28 +72,3 @@ function compute_single_cell_mapping(
     target_cell = get_cell_number(integrator.u, bp.region)
     return target_cell
 end
-
-## Atencao paralelizavel:
-# function populate_basins(bp :: BasinProblem) :: BasinResult #Coordena a paralelização da análise de bacias
-#     # Total cells in the basin
-#     total_cells = prod(bp.region.elements)
-
-#     p = Progress(total_cells) #Inicializa a barra de progresso
-#     # Single thread
-#     if bp.threads == 1
-#         # Map the cells for a single thread - no split necessary
-#         results = map_cells(bp, 1:total_cells, p)
-#         # Return the results - no join necessary
-#         return results
-#     # Multiple threads
-#     else
-#         # Divide the ranges for the especified number of threads
-#         cell_ranges = Iterators.partition(1:total_cells, ceil(Int64, total_cells / bp.threads))
-#         # Creates the tasks to be used (based on the number of threads)
-#         tasks = map(cr -> Threads.@spawn(map_cells(bp, cr, p)), cell_ranges)
-#         # Fetch the results of each thread
-#         results = map(t -> fetch(t), tasks)
-#         # Join the results basins up to one result
-#         return foldl(join_results!, results)
-#     end
-# end
