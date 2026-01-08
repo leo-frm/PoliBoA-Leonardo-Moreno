@@ -34,7 +34,7 @@ function compute_single_cell_mapping(
     cell_id::Int64, 
     integrator, 
     bp::BasinProblem
-    ) :: Int64
+) :: Int64
     u = zeros(Float64, length(bp.region.elements))
     store_cell_center!(u, cell_id, bp.region)
 

@@ -67,10 +67,11 @@ function find_attractors_from_scm(scm::SimpleCellMap, bp::BasinProblem) :: Basin
             # Classifica como quasi-periódico ou divergente
             foreach(c -> grid[c] = next_attractor_id, trajectory)
             push!(attractors, make_attractor_from_cells(
-                    attractor_cells,
-                    number = next_attractor_id,
-                    type = attractor_type,
-                    region = bp.region))
+                attractor_cells,
+                number = next_attractor_id,
+                type = attractor_type,
+                region = bp.region
+            ))
             next_attractor_id += 1
         end
     end
