@@ -3,7 +3,6 @@ using DifferentialEquations
 using Plots
 using PlotThemes
 using Plots.PlotMeasures
-using DelimitedFiles
 using LaTeXStrings
 using Printf
 using Colors
@@ -12,33 +11,10 @@ using ProgressMeter
 
 include("structures.jl")
 include("utils.jl")
+include("milestone1.jl")
 include("milestone2.jl")
-include("milestone4.jl")
 
 # Teste
-function report_attractors(result::BasinResult)
-    # Cores usadas na função plotbasins
-    colors_names = ["Black (Divergent)", "White", "Red", "Yellow", "Blue", 
-                    "Green", "Cyan", "Purple", "Brown", "Pink"]
-    
-    for attr in result.attractors
-        # O ID no grid é attr.number [cite: 33, 35]
-        # O índice da cor no seu array 'colors' é id + 2 
-        color_idx = attr.number + 2
-        color_name = color_idx <= length(colors_names) ? colors_names[color_idx] : "Custom/Other"
-        
-        # Conta quantas células no grid pertencem a este atrator [cite: 41]
-        num_cells = count(==(attr.number), result.cells)
-        
-        @printf("Atrator #%d:\n", attr.number)
-        @printf("  - Tipo: %s\n", attr.kind) # [cite: 40]
-        @printf("  - Cor no Mapa: %s\n", color_name)
-        @printf("  - Células na Bacia: %d\n", num_cells)
-        @printf("  - Pontos no Ciclo: %d\n", length(attr.points)) # [cite: 34]
-        println("-"^20)
-    end
-end
-
 # Helmholtz-Duffing
 function helmholtz_duffing!(du, u, (a,b,c,d,e,ω), t)
     du[1] = u[2] 
@@ -97,8 +73,8 @@ function plotbasins(result::BasinResult)
     return plt
 end
 
-# Benchmark functions for parallel testing
-function bench_scm_helmduff_p(divs; e=0.077, verbose=false, threads=1)
+# Benchmark functions
+function bench_scm_helmduff(divs; e=0.077, verbose=true)
     region = BasinRegion(
         [[-1.2, 1.5], [-1.5, 1.5]], 
         [divs, floor(Int64,(3.0/2.7)*divs)],
@@ -111,15 +87,15 @@ function bench_scm_helmduff_p(divs; e=0.077, verbose=false, threads=1)
         [0.1, -1.2, -0.3, 2.0, e, 1.17],
         2*pi/1.17, 
         10, 
-        1000, 
+        1000,
         20, 
         80, 
         region,
-        threads,  # ← Parâmetro agora
+        1,
     )
 
-    println(">>> Running SCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid ($(threads) thread$(threads>1 ? "s" : ""))")
-    scm = build_scmap_parallel(bp)
+    println(">>> Running SCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid")
+    scm = build_scmap(bp)
     @time result = find_attractors_from_scm(scm, bp)
 
     if verbose
@@ -129,7 +105,7 @@ function bench_scm_helmduff_p(divs; e=0.077, verbose=false, threads=1)
     return result
 end
 
-function bench_scm_spring_column_p(divs; omega=0.0, verbose=false, threads=1)
+function bench_scm_spring_column(divs; omega=0.0, verbose=true)
     region = BasinRegion(
         [[-3.14, 3.14], [-1.3, 1.3]], 
         [divs, divs],
@@ -146,11 +122,11 @@ function bench_scm_spring_column_p(divs; omega=0.0, verbose=false, threads=1)
         20, 
         80, 
         region,
-        threads,  # ← Parâmetro agora
+        1,
     )
 
-    println(">>> Running SCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid ($(threads) thread$(threads>1 ? "s" : ""))")
-    scm = build_scmap_parallel(bp)
+    println(">>> Running SCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid")
+    scm = build_scmap(bp)
     @time result = find_attractors_from_scm(scm, bp)
 
     if verbose
@@ -160,30 +136,26 @@ function bench_scm_spring_column_p(divs; omega=0.0, verbose=false, threads=1)
     return result
 end
 
-# Test functions for parallel testing
-function test_scm_helmduff_p(divs; threads=1)
+# Test functions
+function test_scm_helmduff(divs)
     GC.gc()
-    bench_scm_helmduff_p(10, verbose=false, threads=threads) # pre-compile run
+    bench_scm_helmduff(10, verbose=false) # pre-compile run
     GC.gc()
-    result = bench_scm_helmduff_p(divs, threads=threads)
+    result = bench_scm_helmduff(divs)
     plt = plotbasins(result)
-    savefig(plt, "scm_basin_hd.png")
+    savefig(plt, joinpath(@__DIR__, "scm_basin_hd_testm1.png"))
     display(plt)
-    writedlm("scm_basin_hd.csv", result.cells, ',')
 end
 
-function test_scm_spring_column_p(divs; omega=0.0, threads=1)
+function test_scm_spring_column(divs; omega=0.0)
     GC.gc()
-    bench_scm_spring_column_p(10, omega=omega, verbose=false, threads=threads) # pre-compile run
+    bench_scm_spring_column(10, omega=omega, verbose=false) # pre-compile run
     GC.gc()
-    result = bench_scm_spring_column_p(divs, omega=omega, threads=threads)
+    result = bench_scm_spring_column(divs, omega=omega)
     plt = plotbasins(result)
-    savefig(plt, "scm_basin_sc.png")
+    savefig(plt, joinpath(@__DIR__, "scm_basin_sc_testm1.png"))
     display(plt)
-    writedlm("scm_basin_sc.csv", result.cells, ',')
 end
 
-test_scm_helmduff_p(200, threads=1)
-test_scm_helmduff_p(200, threads=4)
-test_scm_spring_column_p(200, threads=1)
-test_scm_spring_column_p(200, threads=4)
+test_scm_helmduff(200)
+test_scm_spring_column(200)

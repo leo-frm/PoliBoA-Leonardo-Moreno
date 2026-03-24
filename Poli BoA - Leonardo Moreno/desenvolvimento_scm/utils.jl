@@ -92,3 +92,28 @@ function make_attractor_from_cells(cells; number::Int64, type::AttractorType, re
 
     return Attractor(number, type, points, Threads.threadid())
 end
+
+function report_attractors(result::BasinResult)
+    colors_names = ["Black (Divergent)", "White", "Red", "Yellow", "Blue", 
+                    "Green", "Cyan", "Purple", "Brown", "Pink"]
+    
+    println("Detalhamento dos atratores")
+    println("=" ^ 60)
+    
+    for attr in result.attractors
+        color_idx = attr.number + 2
+        color_name = color_idx <= length(colors_names) ? colors_names[color_idx] : "Custom"
+        num_cells = count(==(attr.number), result.cells)
+        
+        println("Atrator #$(attr.number) ($(color_name))")
+        println("-" ^ 40)
+        @printf("  Tipo: %s\n", attr.kind)
+        @printf("  Células na bacia: %d\n", num_cells)
+        @printf("  Pontos no ciclo: %d\n", length(attr.points))
+        println("  Pontos do atrator:")
+        for (i, pt) in enumerate(attr.points)
+            @printf("    [%d] x1 = %+.6f, x2 = %+.6f\n", i, pt[1], pt[2])
+        end
+        println("-" ^ 40)
+    end
+end

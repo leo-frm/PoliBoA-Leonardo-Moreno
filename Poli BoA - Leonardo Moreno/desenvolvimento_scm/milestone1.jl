@@ -46,14 +46,31 @@ function compute_single_cell_mapping(
 
     adjust_cyclic(integrator.u, bp.region.range, bp.region.is_cyclic)
 
-    # Se o ponto final saiu da região estendida → divergência
+    # Se o ponto final saiu da região estendida:  divergência
     if !is_inside_range(integrator.u, bp.region.extended_range)
         return -1
     end
 
-    # Se está dentro da estendida mas fora da região principal → fora da bacia (Na verdade, integra por um novo periodo de ciclos para tomar a decisão se ainda esta fora da bacia ou se realmente divergiu)
+    # Se está dentro da estendida mas fora da região principal: 
+    # reintegra até maximum_extended_cycles tentando retornar ao grid
     if !is_inside_range(integrator.u, bp.region.range)
-        return -2
+        for ext_cycle in 1:bp.maximum_extended_cycles
+            set_integrator!(integrator; u=integrator.u, t=0.0)
+            step!(integrator, bp.period, true)
+            adjust_cyclic(integrator.u, bp.region.range, bp.region.is_cyclic)
+
+            # Saiu da região estendida:  divergente
+            if !is_inside_range(integrator.u, bp.region.extended_range)
+                return -1
+            end
+
+            # Voltou ao grid principal:  sucesso, retorna célula destino
+            if is_inside_range(integrator.u, bp.region.range)
+                return get_cell_number(integrator.u, bp.region)
+            end
+        end
+        # Esgotou tentativas na região estendida: divergente
+        return -1
     end
     
     # Caso geral: determina a célula destino
