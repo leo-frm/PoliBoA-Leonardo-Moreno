@@ -23,6 +23,7 @@
 
 using Accessors
 using DifferentialEquations
+using ProgressMeter
 using Printf
 
 include("structures.jl")
@@ -30,6 +31,7 @@ include("utils.jl")
 include("milestone2.jl")
 include("milestone4.jl")
 include("milestone5.jl")
+include("poliboa_original.jl")
 
 # =============================================================================
 # Dinâmicas (mesmo setup dos outros testes)
