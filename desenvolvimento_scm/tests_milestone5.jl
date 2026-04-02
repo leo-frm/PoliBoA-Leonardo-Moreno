@@ -16,7 +16,7 @@
 #   2. Roda benchmark_method no código original (populate_basins)
 #   3. Compara os dois benchmarks (compare_benchmarks)
 #   4. Compara as bacias célula a célula (compare_basins → match_fraction)
-#   5. Gera perfil de alocação (allocation_profile)
+#   5. Escalabilidade de memória com tamanho do grid (memory_scaling)
 #   6. (Opcional) Análise de escalabilidade por threads (thread_scaling)
 #
 # =============================================================================
@@ -147,25 +147,22 @@ function test_compare_benchmarks(; divs=200, trials=3)
 end
 
 # =============================================================================
-# TESTE 4: Perfil de alocação
+# TESTE 4: Escalabilidade de memória
 # =============================================================================
 
-function test_allocation_profile(; divs=200)
+function test_memory_scaling(; divs_range=[100, 200, 400])
     println("\n" * "=" ^ 60)
-    println("TESTE 4: Perfil de Alocação (divs=$divs)")
+    println("TESTE 4: Escalabilidade de Memória (divs=$divs_range)")
     println("=" ^ 60)
 
-    bp = make_helmduff_bp(divs)
+    bp_list = [make_helmduff_bp(d) for d in divs_range]
 
-    profile_scm = allocation_profile(label="SCM") do
-        run_scm(bp)
-    end
-
-    profile_og = allocation_profile(label="Original") do
-        populate_basins(bp)
-    end
-
-    return (scm=profile_scm, original=profile_og)
+    memory_scaling(
+        build_scmap_parallel,
+        find_attractors_from_scm,
+        bp_list;
+        method_name = "SCM-parallel",
+    )
 end
 
 # =============================================================================
@@ -195,9 +192,13 @@ function test_thread_scaling(; divs=200, trials=3)
         push!(counts, max_t)
     end
 
-    results = thread_scaling(thread_counts=counts, trials=trials) do nt
-        make_helmduff_bp(divs, threads=nt)
-    end
+    results = thread_scaling(
+        build_scmap_parallel,
+        find_attractors_from_scm,
+        nt -> make_helmduff_bp(divs, threads=nt);
+        thread_counts = counts,
+        trials = trials,
+    )
 
     return results
 end
@@ -209,8 +210,8 @@ end
 bench_scm  = test_benchmark_scm(divs=200, trials=3)
 match      = test_compare_basins(divs=200)
 ratios     = test_compare_benchmarks(divs=200, trials=3)
-profiles   = test_allocation_profile(divs=200)
-scaling    = test_thread_scaling(divs=200, trials=3)
+mem_results   = test_memory_scaling(divs_range=[100, 200, 400])
+thr_results   = test_thread_scaling(divs=200, trials=3)
 
 println("\n" * "=" ^ 60)
 println("Resumo Final")

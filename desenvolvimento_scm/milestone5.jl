@@ -6,10 +6,8 @@
 #   - benchmark_method:    mede tempo médio, desvio padrão, bytes alocados e nº de integrações
 #   - compare_basins:      compara dois BasinResult e retorna a fração de células coincidentes
 #   - compare_benchmarks:  compara dois resultados de benchmark (tempo, bytes, integrações)
-#   - memory_scaling:  perfil detalhado de alocações de memória de uma execução
+#   - memory_scaling:      mede como a memória escala com o tamanho do grid
 #   - thread_scaling:      mede como a performance escala com o número de threads
-#
-# Depende de: structures.jl, utils.jl, milestone2.jl, milestone4.jl
 
 using Printf
 using Statistics
@@ -103,7 +101,7 @@ end
     compare_basins(result_a::BasinResult, result_b::BasinResult) -> Float64
 
 Compara célula a célula os dois resultados e retorna a fração de coincidência
-(`match_fraction`), ignorando a numeração absoluta dos atratores — o que importa
+(`match_fraction`), ignorando a numeração absoluta dos atratores: o que importa
 é se duas células que pertencem ao mesmo atrator em `a` também pertencem ao mesmo
 atrator em `b`.
 """
@@ -179,35 +177,48 @@ end
 # memory_scaling
 # =============================================================================
 """
-    memory_scaling(run_fn; label="método") -> NamedTuple
+    memory_scaling(build_fn, find_fn, bp_list; method_name)
 
-Executa `run_fn()` uma vez e retorna perfil de alocação:
-bytes totais, nº de alocações (GC collections), e tempo.
+Mede como a memória alocada escala com o tamanho do grid.
+`bp_list` é um vetor de BasinProblem com resoluções crescentes.
 
-Usa `@timed` + `Base.gc_num()` para capturar os dados.
+Métrica derivada `MB/kCell` permite comparar a eficiência de memória
+independentemente da resolução.
 """
-function memory_scaling(run_fn; label::String="método")
-    GC.gc()
-    gc_before = Base.gc_num()
-    stats = @timed run_fn()
-    gc_after = Base.gc_num()
+function memory_scaling(
+    build_fn    :: Function,
+    find_fn     :: Function,
+    bp_list     :: Vector{<:BasinProblem};
+    method_name :: String = "SCM"
+)
+    w = 72
+    println("\n" * "=" ^ w)
+    @printf("  ESCALABILIDADE DE MEMÓRIA  ·  %s\n", method_name)
+    println("=" ^ w)
+    @printf("  %-16s %10s %12s %12s %14s\n",
+        "Grid", "Células", "Memória(MB)", "MB/kCell", "Integrações")
+    println("-" ^ w)
 
-    gc_collections = gc_after.total - gc_before.total
+    for bp in bp_list
+        GC.gc()
+        total_cells = prod(bp.region.elements)
+        grid_str    = join(bp.region.elements, "×")
 
-    println("=" ^ 50)
-    println("Perfil de Alocação — $(label)")
-    println("=" ^ 50)
-    @printf("  Tempo:           %.4f s\n", stats.time)
-    @printf("  Bytes alocados:  %.2f MB\n", stats.bytes / 1e6)
-    @printf("  GC collections:  %d\n", gc_collections)
-    println("=" ^ 50)
+        local scm, result
+        alloc_bytes = @allocated begin
+            scm    = build_fn(bp)
+            result = find_fn(scm, bp)
+        end
 
-    return (
-        time_s          = stats.time,
-        bytes_allocated = stats.bytes,
-        gc_collections  = gc_collections,
-        result          = stats.value,
-    )
+        mb_total     = alloc_bytes / 1024^2
+        mb_per_kcell = mb_total / (total_cells / 1_000.0)
+
+        @printf("  %-16s %10d %12.1f %12.3f %14d\n",
+            grid_str, total_cells, mb_total, mb_per_kcell, scm.computed_cells)
+        GC.gc()
+    end
+
+    println("=" ^ w * "\n")
 end
 
 # =============================================================================
@@ -224,7 +235,13 @@ o número de threads dado.
 
 Retorna vetor de NamedTuples com (threads, mean_time, speedup).
 """
-function thread_scaling(make_bp_fn; thread_counts=[1, 2, 4], trials::Int=3)
+function thread_scaling(
+    build_fn    :: Function,
+    find_fn     :: Function,
+    make_bp_fn;
+    thread_counts = [1, 2, 4],
+    trials::Int = 3
+)
     results = NamedTuple{(:threads, :mean_time, :speedup), Tuple{Int, Float64, Float64}}[]
     base_time = 0.0
 
@@ -237,8 +254,9 @@ function thread_scaling(make_bp_fn; thread_counts=[1, 2, 4], trials::Int=3)
     for nt in thread_counts
         bp = make_bp_fn(nt)
         bench = benchmark_method(trials=trials, warmup=1) do
-            scm = build_scmap_parallel(bp)
-            find_attractors_from_scm(scm, bp)
+            scm = build_fn(bp)
+            find_fn(scm, bp)
+            return scm
         end
 
         if nt == first(thread_counts)
