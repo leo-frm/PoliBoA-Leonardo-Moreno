@@ -86,7 +86,7 @@ function bench_scm_helmduff_p(divs; e=0.077, verbose=false, threads=1)
         helmholtz_duffing!, 
         [0.1, -1.2, -0.3, 2.0, e, 1.17],
         2*pi/1.17, 
-        10, 
+        100, 
         1000, 
         20, 
         80, 

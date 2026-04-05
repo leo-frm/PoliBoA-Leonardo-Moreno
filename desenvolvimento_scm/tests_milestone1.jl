@@ -117,7 +117,7 @@ function bench_scm_spring_column(divs; omega=0.0, verbose=true)
         spring_column!, 
         [0.01, 0.05, 0.8, 0.01, 0.05, omega],
         7.853981634, 
-        10, 
+        100, 
         1000, 
         20, 
         80, 

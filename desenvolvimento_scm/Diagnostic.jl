@@ -180,7 +180,7 @@ function run_diagnostic_sc(divs=200; omega=0.0)
         spring_column!, 
         [0.01, 0.05, 0.8, 0.01, 0.05, omega],
         7.853981634, 
-        10, 
+        100, 
         1000, 
         20, 
         80, 

@@ -63,7 +63,7 @@ function make_spring_column_bp(divs; omega=0.0, threads=1)
         spring_column!,
         [0.01, 0.05, 0.8, 0.01, 0.05, omega],
         7.853981634,
-        10,
+        100,
         1000,
         20,
         80,
