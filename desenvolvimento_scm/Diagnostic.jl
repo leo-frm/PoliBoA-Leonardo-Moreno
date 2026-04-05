@@ -13,6 +13,12 @@ function helmholtz_duffing!(du, u, (a,b,c,d,e,ω), t)
     du[2] = -a*u[2] - b*u[1] - c*u[1]^2 - d*u[1]^3 + e*sin(ω*t)
 end
 
+# Spring Column
+function spring_column!(dx, x, (c, p, alpha, q, q1, omega), t)
+    dx[1] = x[2]
+    dx[2] = -c * x[2] + p * sin(x[1]) - (1 - 1 / sqrt(1 + alpha * sin(x[1])) - (q + q1 * sin(omega * t))) * cos(x[1])
+end
+
 # Matriz de distâncias entre centróides
 function distance_matrix(result::BasinResult, bp::BasinProblem)
     ids = [attr.number for attr in result.attractors]
@@ -130,7 +136,7 @@ function compare_attractors_timeseries(result::BasinResult, bp::BasinProblem, id
     return plt
 end
 
-function run_diagnostic(divs=200)
+function run_diagnostic_hd(divs=200)
     region = BasinRegion(
         [[-1.2, 1.5], [-1.5, 1.5]], 
         [divs, floor(Int64,(3.0/2.7)*divs)],
@@ -150,25 +156,60 @@ function run_diagnostic(divs=200)
         1,
     )
 
-    println(">>> Construindo mapa...")
+    println(">>> [HD] Construindo mapa...")
     scm = build_scmap(bp)
     
-    println(">>> Encontrando atratores...")
+    println(">>> [HD] Encontrando atratores...")
     result = find_attractors_from_scm(scm, bp)
     
     report_attractors(result)
-    centroids = distance_matrix(result, bp)
+    distance_matrix(result, bp)
+    
+    return result, bp
+end
+
+function run_diagnostic_sc(divs=200; omega=0.0)
+    region = BasinRegion(
+        [[-3.14, 3.14], [-1.3, 1.3]], 
+        [divs, divs],
+        [true, false],
+        [[-3.14, 3.14],[-2.0, 2.0]],
+    )
+
+    bp = BasinProblem(
+        spring_column!, 
+        [0.01, 0.05, 0.8, 0.01, 0.05, omega],
+        7.853981634, 
+        10, 
+        1000, 
+        20, 
+        80, 
+        region,
+        1,
+    )
+
+    println(">>> [SC] Construindo mapa...")
+    scm = build_scmap(bp)
+    
+    println(">>> [SC] Encontrando atratores...")
+    result = find_attractors_from_scm(scm, bp)
+    
+    report_attractors(result)
+    distance_matrix(result, bp)
     
     return result, bp
 end
 
 # 1. Rodar o diagnóstico:
-    result, bp = run_diagnostic(200)
+    result_hd, bp_hd = run_diagnostic_hd(200)
+    result_sc, bp_sc = run_diagnostic_sc(200)
 #
-# 2. Comparção de dois atratores:
-    compare_attractors_timeseries(result, bp, 2, 4) 
-    compare_attractors_timeseries(result, bp, 2, 5)  # Amarelo vs Ciano
-# =============================================================================
+# 2. Comparção de atratores:
+    ids = [attr.number for attr in result_sc.attractors]
 
-println("Script carregado!")
-println("Execute: result, bp = run_diagnostic()")
+    for i in 1:length(ids)
+        for j in i+1:length(ids)
+            compare_attractors_timeseries(result_sc, bp_sc, ids[i], ids[j])
+        end
+    end
+# =============================================================================
