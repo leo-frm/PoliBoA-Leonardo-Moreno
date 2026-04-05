@@ -51,6 +51,27 @@ function make_helmduff_bp(divs; e=0.077, threads=1)
     )
 end
 
+function make_spring_column_bp(divs; omega=0.0, threads=1)
+    region = BasinRegion(
+        [[-3.14, 3.14], [-1.3, 1.3]],
+        [divs, divs],
+        [true, false],
+        [[-3.14, 3.14], [-2.0, 2.0]],
+    )
+
+    return BasinProblem(
+        spring_column!,
+        [0.01, 0.05, 0.8, 0.01, 0.05, omega],
+        7.853981634,
+        10,
+        1000,
+        20,
+        80,
+        region,
+        threads,
+    )
+end
+
 """Roda o pipeline SCM completo (build + find_attractors) e retorna o SCM."""
 function run_scm(bp::BasinProblem)
     scm = build_scmap_parallel(bp)
@@ -58,12 +79,16 @@ function run_scm(bp::BasinProblem)
     return scm
 end
 
-function test_benchmark_scm(; divs=200, trials=5)
+# =============================================================================
+# TESTE 1: Benchmark do método SCM
+# =============================================================================
+
+function test_benchmark_scm(; divs=200, trials=5, make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
     println("\n" * "=" ^ 60)
-    println("TESTE 1: Benchmark do SCM (divs=$divs)")
+    println("TESTE 1: Benchmark do SCM — $label (divs=$divs)")
     println("=" ^ 60)
 
-    bp = make_helmduff_bp(divs)
+    bp = make_bp(divs)
     bench = benchmark_method(trials=trials) do
         run_scm(bp)
     end
@@ -72,35 +97,40 @@ function test_benchmark_scm(; divs=200, trials=5)
     return bench
 end
 
-function test_compare_basins(; divs=200)
+# =============================================================================
+# TESTE 2: Comparação de bacias SCM vs código original
+# =============================================================================
+
+function test_compare_basins(; divs=200, make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
     println("\n" * "=" ^ 60)
-    println("TESTE 2: Comparação de bacias SCM vs Original (divs=$divs)")
+    println("TESTE 2: Comparação de bacias SCM vs Original — $label (divs=$divs)")
     println("=" ^ 60)
 
-    bp = make_helmduff_bp(divs)
+    bp = make_bp(divs)
 
-    # Resultado SCM
     println("  Rodando SCM...")
     scm = build_scmap_parallel(bp)
     result_scm = find_attractors_from_scm(scm, bp)
 
-    # Resultado Original (populate_basins)
     println("  Rodando método original...")
     result_og = populate_basins(bp)
 
-    # Compara
     match = compare_basins(result_scm, result_og)
     @printf("  → match_fraction = %.4f (%.1f%% de coincidência)\n", match, match * 100)
 
     return match
 end
 
-function test_compare_benchmarks(; divs=200, trials=3)
+# =============================================================================
+# TESTE 3: Comparação de benchmarks SCM vs Original
+# =============================================================================
+
+function test_compare_benchmarks(; divs=200, trials=3, make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
     println("\n" * "=" ^ 60)
-    println("TESTE 3: Comparação de Benchmarks SCM vs Original (divs=$divs)")
+    println("TESTE 3: Comparação de Benchmarks SCM vs Original — $label (divs=$divs)")
     println("=" ^ 60)
 
-    bp = make_helmduff_bp(divs)
+    bp = make_bp(divs)
 
     println("\n  >> Benchmarking SCM:")
     bench_scm = benchmark_method(trials=trials) do
@@ -116,26 +146,33 @@ function test_compare_benchmarks(; divs=200, trials=3)
     return ratios
 end
 
-function test_memory_scaling(; divs_range=[100, 200, 400])
+# =============================================================================
+# TESTE 4: Escalabilidade de memória
+# =============================================================================
+
+function test_memory_scaling(; divs_range=[100, 200, 400], make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
     println("\n" * "=" ^ 60)
-    println("TESTE 4: Escalabilidade de Memória (divs=$divs_range)")
+    println("TESTE 4: Escalabilidade de Memória — $label (divs=$divs_range)")
     println("=" ^ 60)
 
-    bp_list = [make_helmduff_bp(d) for d in divs_range]
+    bp_list = [make_bp(d) for d in divs_range]
 
     memory_scaling(
         build_scmap_parallel,
         find_attractors_from_scm,
         bp_list;
-        method_name = "SCM-parallel",
+        method_name = "SCM — $label",
     )
 end
 
-# Ganho de velocidade por thread
-function test_thread_scaling(; divs=200, trials=3)
+# =============================================================================
+# TESTE 5: Escalabilidade por threads
+# =============================================================================
+
+function test_thread_scaling(; divs=200, trials=3, make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
     max_t = Threads.nthreads()
     println("\n" * "=" ^ 60)
-    println("TESTE 5: Escalabilidade por Threads (divs=$divs, max_threads=$max_t)")
+    println("TESTE 5: Escalabilidade por Threads — $label (divs=$divs, max_threads=$max_t)")
     println("=" ^ 60)
 
     if max_t == 1
@@ -144,7 +181,6 @@ function test_thread_scaling(; divs=200, trials=3)
         return nothing
     end
 
-    # Gera lista de threads: 1, 2, 4, ... até max_t
     counts = [1]
     t = 2
     while t <= max_t
@@ -158,7 +194,7 @@ function test_thread_scaling(; divs=200, trials=3)
     results = thread_scaling(
         build_scmap_parallel,
         find_attractors_from_scm,
-        nt -> make_helmduff_bp(divs, threads=nt);
+        nt -> make_bp(divs, threads=nt);
         thread_counts = counts,
         trials = trials,
     )
@@ -166,17 +202,41 @@ function test_thread_scaling(; divs=200, trials=3)
     return results
 end
 
-bench_scm  = test_benchmark_scm(divs=200, trials=3)
-match      = test_compare_basins(divs=200)
-ratios     = test_compare_benchmarks(divs=200, trials=3)
-mem_results   = test_memory_scaling(divs_range=[100, 200, 400])
-thr_results   = test_thread_scaling(divs=200, trials=3)
+# =============================================================================
+# EXECUÇÃO — HELMHOLTZ-DUFFING
+# =============================================================================
 
+println("\n" * "▓" ^ 60)
+println("▓  HELMHOLTZ-DUFFING")
+println("▓" ^ 60)
+
+bench_hd  = test_benchmark_scm(divs=200, trials=3, make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
+match_hd  = test_compare_basins(divs=200, make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
+ratios_hd = test_compare_benchmarks(divs=200, trials=3, make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
+test_memory_scaling(divs_range=[100, 200, 400], make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
+test_thread_scaling(divs=200, trials=3, make_bp=make_helmduff_bp, label="Helmholtz-Duffing")
+
+# =============================================================================
+# EXECUÇÃO — SPRING COLUMN
+# =============================================================================
+
+println("\n" * "▓" ^ 60)
+println("▓  SPRING COLUMN")
+println("▓" ^ 60)
+
+bench_sc  = test_benchmark_scm(divs=200, trials=3, make_bp=make_spring_column_bp, label="Spring Column")
+match_sc  = test_compare_basins(divs=200, make_bp=make_spring_column_bp, label="Spring Column")
+ratios_sc = test_compare_benchmarks(divs=200, trials=3, make_bp=make_spring_column_bp, label="Spring Column")
+test_memory_scaling(divs_range=[100, 200, 400], make_bp=make_spring_column_bp, label="Spring Column")
+test_thread_scaling(divs=200, trials=3, make_bp=make_spring_column_bp, label="Spring Column")
+
+# =============================================================================
+# OUTPUT
+# =============================================================================
 println("\n" * "=" ^ 60)
 println("Resumo Final")
 println("=" ^ 60)
-@printf("  match_fraction:  %.4f\n", match)
-@printf("  SCM tempo médio: %.4f s\n", bench_scm.mean_time_s)
-@printf("  Razão tempo:     %.2fx\n", ratios.time_ratio)
+@printf("  [HD] match_fraction:  %.4f | tempo médio: %.4f s\n", match_hd, bench_hd.mean_time_s)
+@printf("  [SC] match_fraction:  %.4f | tempo médio: %.4f s\n", match_sc, bench_sc.mean_time_s)
 println("=" ^ 60)
 println("Done.")
