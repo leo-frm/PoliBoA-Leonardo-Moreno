@@ -1,7 +1,3 @@
-# =============================================================================
-# DIAGNÓSTICO DOS ATRATORES
-# =============================================================================
-
 using DifferentialEquations
 using Plots
 using Printf
@@ -16,10 +12,6 @@ function helmholtz_duffing!(du, u, (a,b,c,d,e,ω), t)
     du[1] = u[2] 
     du[2] = -a*u[2] - b*u[1] - c*u[1]^2 - d*u[1]^3 + e*sin(ω*t)
 end
-
-# =============================================================================
-# FUNÇÕES DE DIAGNÓSTICO
-# =============================================================================
 
 # Matriz de distâncias entre centróides
 function distance_matrix(result::BasinResult, bp::BasinProblem)
@@ -138,10 +130,6 @@ function compare_attractors_timeseries(result::BasinResult, bp::BasinProblem, id
     return plt
 end
 
-# =============================================================================
-# EXECUÇÃO
-# =============================================================================
-
 function run_diagnostic(divs=200)
     region = BasinRegion(
         [[-1.2, 1.5], [-1.5, 1.5]], 
@@ -174,13 +162,10 @@ function run_diagnostic(divs=200)
     return result, bp
 end
 
-# =============================================================================
-# COMO USAR:
-# =============================================================================
-# 1. Rode o diagnóstico:
+# 1. Rodar o diagnóstico:
     result, bp = run_diagnostic(200)
 #
-# 2. Compare dois atratores:
+# 2. Comparção de dois atratores:
     compare_attractors_timeseries(result, bp, 2, 4) 
     compare_attractors_timeseries(result, bp, 2, 5)  # Amarelo vs Ciano
 # =============================================================================

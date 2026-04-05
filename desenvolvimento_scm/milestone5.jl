@@ -1,7 +1,3 @@
-# =============================================================================
-# Milestone 5 — Validação e Benchmarking
-# =============================================================================
-#
 # Funções de validação para o método SCM:
 #   - benchmark_method:    mede tempo médio, desvio padrão, bytes alocados e nº de integrações
 #   - compare_basins:      compara dois BasinResult e retorna a fração de células coincidentes
@@ -12,10 +8,6 @@
 using Printf
 using Statistics
 
-# =============================================================================
-# Struct de resultado de benchmark
-# =============================================================================
-
 struct BenchmarkResult
     mean_time_s     :: Float64      # Tempo médio em segundos
     std_time_s      :: Float64      # Desvio padrão do tempo em segundos
@@ -25,9 +17,6 @@ struct BenchmarkResult
     trials          :: Int64        # Número de execuções realizadas
 end
 
-# =============================================================================
-# benchmark_method
-# =============================================================================
 """
     benchmark_method(run_fn; trials=5, warmup=1) -> BenchmarkResult
 
@@ -94,9 +83,6 @@ function Base.show(io::IO, b::BenchmarkResult)
     @printf(io, "  Integrações:    %d\n", b.n_integrations)
 end
 
-# =============================================================================
-# compare_basins
-# =============================================================================
 """
     compare_basins(result_a::BasinResult, result_b::BasinResult) -> Float64
 
@@ -139,9 +125,6 @@ function compare_basins(result_a::BasinResult, result_b::BasinResult) :: Float64
     return matches / total
 end
 
-# =============================================================================
-# compare_benchmarks
-# =============================================================================
 """
     compare_benchmarks(bench_a::BenchmarkResult, bench_b::BenchmarkResult)
 
@@ -173,9 +156,6 @@ function compare_benchmarks(bench_a::BenchmarkResult, bench_b::BenchmarkResult)
     )
 end
 
-# =============================================================================
-# memory_scaling
-# =============================================================================
 """
     memory_scaling(build_fn, find_fn, bp_list; method_name)
 
@@ -221,9 +201,6 @@ function memory_scaling(
     println("=" ^ w * "\n")
 end
 
-# =============================================================================
-# thread_scaling
-# =============================================================================
 """
     thread_scaling(make_bp_fn, thread_counts; divs=200, trials=3)
 

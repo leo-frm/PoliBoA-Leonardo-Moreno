@@ -1,25 +1,9 @@
-# =============================================================================
-# tests_milestone5.jl — Testes de Validação (Milestone 5)
-# =============================================================================
-#
-# COMO RODAR:
-#   cd desenvolvimento_scm/
-#   julia tests_milestone5.jl
-#
-# PRÉ-REQUISITOS:
-#   - Julia com pacotes: DifferentialEquations, Plots, Accessors, etc.
-#   - Arquivos no mesmo diretório: structures.jl, utils.jl, milestone2.jl, milestone4.jl, milestone5.jl
-#   - Para testes de thread_scaling: iniciar Julia com threads, ex: julia -t 4 tests_milestone5.jl
-#
-# O QUE ESTE SCRIPT FAZ:
 #   1. Roda benchmark_method no SCM (helmholtz-duffing, 200 divs)
 #   2. Roda benchmark_method no código original (populate_basins)
 #   3. Compara os dois benchmarks (compare_benchmarks)
 #   4. Compara as bacias célula a célula (compare_basins → match_fraction)
 #   5. Escalabilidade de memória com tamanho do grid (memory_scaling)
 #   6. (Opcional) Análise de escalabilidade por threads (thread_scaling)
-#
-# =============================================================================
 
 using Accessors
 using DifferentialEquations
@@ -33,18 +17,18 @@ include("milestone4.jl")
 include("milestone5.jl")
 include("poliboa_original.jl")
 
-# =============================================================================
-# Dinâmicas (mesmo setup dos outros testes)
-# =============================================================================
-
+#Teste
+# Helmholtz-Duffing
 function helmholtz_duffing!(du, u, (a,b,c,d,e,ω), t)
     du[1] = u[2]
     du[2] = -a*u[2] - b*u[1] - c*u[1]^2 - d*u[1]^3 + e*sin(ω*t)
 end
 
-# =============================================================================
-# Helpers para criar BasinProblems reutilizáveis
-# =============================================================================
+# Spring Column
+function spring_column!(dx, x, (c, p, alpha, q, q1, omega), t)
+    dx[1] = x[2]
+    dx[2] = -c * x[2] + p * sin(x[1]) - (1 - 1 / sqrt(1 + alpha * sin(x[1])) - (q + q1 * sin(omega * t))) * cos(x[1])
+end
 
 function make_helmduff_bp(divs; e=0.077, threads=1)
     region = BasinRegion(
@@ -67,20 +51,12 @@ function make_helmduff_bp(divs; e=0.077, threads=1)
     )
 end
 
-# =============================================================================
-# Funções de execução que serão passadas ao benchmark_method
-# =============================================================================
-
 """Roda o pipeline SCM completo (build + find_attractors) e retorna o SCM."""
 function run_scm(bp::BasinProblem)
     scm = build_scmap_parallel(bp)
     find_attractors_from_scm(scm, bp)
     return scm
 end
-
-# =============================================================================
-# TESTE 1: Benchmark do método SCM
-# =============================================================================
 
 function test_benchmark_scm(; divs=200, trials=5)
     println("\n" * "=" ^ 60)
@@ -95,10 +71,6 @@ function test_benchmark_scm(; divs=200, trials=5)
     println(bench)
     return bench
 end
-
-# =============================================================================
-# TESTE 2: Comparação de bacias SCM vs código original
-# =============================================================================
 
 function test_compare_basins(; divs=200)
     println("\n" * "=" ^ 60)
@@ -123,10 +95,6 @@ function test_compare_basins(; divs=200)
     return match
 end
 
-# =============================================================================
-# TESTE 3: Comparação de benchmarks SCM vs Original
-# =============================================================================
-
 function test_compare_benchmarks(; divs=200, trials=3)
     println("\n" * "=" ^ 60)
     println("TESTE 3: Comparação de Benchmarks SCM vs Original (divs=$divs)")
@@ -148,10 +116,6 @@ function test_compare_benchmarks(; divs=200, trials=3)
     return ratios
 end
 
-# =============================================================================
-# TESTE 4: Escalabilidade de memória
-# =============================================================================
-
 function test_memory_scaling(; divs_range=[100, 200, 400])
     println("\n" * "=" ^ 60)
     println("TESTE 4: Escalabilidade de Memória (divs=$divs_range)")
@@ -167,10 +131,7 @@ function test_memory_scaling(; divs_range=[100, 200, 400])
     )
 end
 
-# =============================================================================
-# TESTE 5: Escalabilidade por threads (requer julia -t N)
-# =============================================================================
-
+# Ganho de velocidade por thread
 function test_thread_scaling(; divs=200, trials=3)
     max_t = Threads.nthreads()
     println("\n" * "=" ^ 60)
@@ -204,10 +165,6 @@ function test_thread_scaling(; divs=200, trials=3)
 
     return results
 end
-
-# =============================================================================
-# EXECUÇÃO
-# =============================================================================
 
 bench_scm  = test_benchmark_scm(divs=200, trials=3)
 match      = test_compare_basins(divs=200)

@@ -1,7 +1,4 @@
-# =============================================================================
-# poliboa_original.jl — Funções do método original extraídas de poliboa.jl
-# =============================================================================
-# Contém APENAS as funções algorítmicas que não existem em structures.jl/utils.jl:
+# Contém as funções algorítmicas que não existem em structures.jl/utils.jl:
 #   - populate_basins
 #   - map_cells
 #   - search_for_attractor!
@@ -9,7 +6,6 @@
 #
 # Structs, funções utilitárias e dinâmicas NÃO estão aqui (seria uma repetição, já que vêm de
 # structures.jl, utils.jl e do próprio tests_milestone5.jl).
-# =============================================================================
 
 function populate_basins(bp :: BasinProblem) :: BasinResult
     total_cells = prod(bp.region.elements)

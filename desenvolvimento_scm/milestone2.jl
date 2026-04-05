@@ -1,8 +1,3 @@
-# celula 1 -> 32 : 1 esta 0? esta em 0, 1 recebe 1, 32 esta em 0? recebe 1 também.
-# capturar retornos na própria trajetória
-# definir os pontos do atrator
-# adicionar definição para trajetórias que atingem max_steps
-
 function find_attractors_from_scm(scm::SimpleCellMap, bp::BasinProblem) :: BasinResult
     grid = zeros(Int64, Tuple(bp.region.elements))
     attractors = Attractor[]
