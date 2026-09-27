@@ -160,3 +160,42 @@ function report_image_distribution(gcm::GeneralizedCellMap)
 
     return nothing
 end
+
+# Converte uma imagem do mapa no índice de nó do grafo de transições: o
+# sumidouro (-1) passa a ser o nó N+1, convenção de Hsu (§11.1) para a
+# implementação computacional, em que o rótulo 0 não está disponível
+gcm_node(img::Integer, N::Int64) :: Int64 = img < 0 ? N + 1 : Int64(img)
+
+# Pré-imagens do nó z (R(z,·) de Hsu §11.2), sem cópia
+function preimages_of(pre::PreImageArray, z::Int64)
+    return view(pre.cells, pre.offsets[z]:(pre.offsets[z + 1] - 1))
+end
+
+# Imprime o resumo da análise do GCM: soluções periódicas do SCM dominante,
+# grupos persistentes encontrados e fração de células de fronteira
+function report_gcm_analysis(analysis::GcmAnalysis)
+    N = length(analysis.group_of) - 1
+    n_persistent = count(>(0), view(analysis.group_of, 1:N))
+    n_single = count(==(1), view(analysis.domicile_count, 1:N))
+    n_multiple = count(>(1), view(analysis.domicile_count, 1:N))
+
+    w = 60
+    println("\n" * "=" ^ w)
+    println("  ANÁLISE DO GCM (Hsu, Cap. 11)")
+    println("=" ^ w)
+    @printf("  Soluções periódicas do SCM dominante : %d\n", analysis.n_periodic_solutions)
+    @printf("  Grupos persistentes (com sumidouro)  : %d\n", length(analysis.groups))
+    println("-" ^ w)
+    for (g, members) in enumerate(analysis.groups)
+        label = g == 1 ? "Sumidouro (divergência)" : "Grupo $g → Atrator #$(g - 1)"
+        @printf("  %-28s %6d células, período %d\n", label, length(members), analysis.periods[g])
+    end
+    println("-" ^ w)
+    @printf("  Células persistentes     : %6d (%.2f%%)\n", n_persistent, 100.0 * n_persistent / N)
+    @printf("  Domicílio único          : %6d (%.2f%%)\n", n_single, 100.0 * n_single / N)
+    @printf("  Domicílio múltiplo       : %6d (%.2f%%)  ← fronteira entre bacias\n",
+        n_multiple, 100.0 * n_multiple / N)
+    println("=" ^ w * "\n")
+
+    return nothing
+end

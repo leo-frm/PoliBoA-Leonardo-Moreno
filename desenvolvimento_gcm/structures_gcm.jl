@@ -41,3 +41,23 @@ function GeneralizedCellMap(
         region,
     )
 end
+
+# Arranjo de pré-imagens (Hsu §11.2): R(z,j) é a j-ésima célula que tem z entre
+# suas imagens, e J(z) o número de pré-imagens de z. Mesmo formato CSR do mapa:
+# as pré-imagens do nó z ocupam cells[offsets[z] : offsets[z+1]-1].
+# O nó N+1 representa a célula sumidouro (Hsu §11.1: N_c + 1 na implementação).
+mutable struct PreImageArray
+    offsets :: Vector{Int32} #Índices de início da lista de pré-imagens de cada nó
+    cells :: Vector{Int32} #Pré-imagens concatenadas
+end
+
+# Resultado completo da análise do GCM (Hsu §11.3 a §11.10). Todos os vetores
+# têm N+1 posições: as células 1..N do grid e o sumidouro na posição N+1.
+mutable struct GcmAnalysis
+    n_periodic_solutions :: Int64 #Nps: soluções periódicas do SCM dominante (§11.3)
+    groups :: Vector{Vector{Int64}} #B_g: células de cada grupo persistente; groups[1] é o sumidouro
+    periods :: Vector{Int64} #K(g): período de cada grupo persistente (§11.6)
+    group_of :: Vector{Int64} #G(z): grupo persistente da célula, ou 0 se transiente
+    domicile_count :: Vector{Int64} #Dm(z): número de domicílios da célula (§11.10)
+    absorption :: Matrix{Float64} #Ag(z,g): probabilidade de absorção da célula z no grupo g (§11.9)
+end
