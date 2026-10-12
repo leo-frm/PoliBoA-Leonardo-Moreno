@@ -76,7 +76,7 @@ function plotbasins(result::BasinResult)
 end
 
 # Benchmark functions
-function bench_gcm_helmduff(divs; e=0.077, S=3, verbose=true)
+function bench_gcm_helmduff(divs; e=0.077, subgrid=[10, 10], m=10, sampling=:random, verbose=true)
     region = BasinRegion(
         [[-1.2, 1.5], [-1.5, 1.5]], 
         [divs, floor(Int64,(3.0/2.7)*divs)],
@@ -96,9 +96,9 @@ function bench_gcm_helmduff(divs; e=0.077, S=3, verbose=true)
         1,
     )
 
-    gp = GcmProblem(bp, S)
+    gp = GcmProblem(bp, subgrid, m; sampling=sampling)
 
-    println(">>> Running GCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid, S=$S")
+    println(">>> Running GCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid, subgrid $(join(subgrid, "x")), m=$m, $(sampling)")
     gcm = build_gcmap(gp)
     @time result = find_attractors_from_gcm(gcm, gp)
 
@@ -109,7 +109,7 @@ function bench_gcm_helmduff(divs; e=0.077, S=3, verbose=true)
     return result
 end
 
-function bench_gcm_spring_column(divs; omega=0.0, S=3, verbose=true)
+function bench_gcm_spring_column(divs; omega=0.0, subgrid=[10, 10], m=10, sampling=:random, verbose=true)
     region = BasinRegion(
         [[-3.14, 3.14], [-1.3, 1.3]], 
         [divs, divs],
@@ -129,9 +129,9 @@ function bench_gcm_spring_column(divs; omega=0.0, S=3, verbose=true)
         1,
     )
 
-    gp = GcmProblem(bp, S)
+    gp = GcmProblem(bp, subgrid, m; sampling=sampling)
 
-    println(">>> Running GCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid, S=$S")
+    println(">>> Running GCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid, subgrid $(join(subgrid, "x")), m=$m, $(sampling)")
     gcm = build_gcmap(gp)
     @time result = find_attractors_from_gcm(gcm, gp)
 
@@ -143,21 +143,21 @@ function bench_gcm_spring_column(divs; omega=0.0, S=3, verbose=true)
 end
 
 # Test functions
-function test_gcm_helmduff(divs; S=3)
+function test_gcm_helmduff(divs; subgrid=[10, 10], m=10, sampling=:random)
     GC.gc()
-    bench_gcm_helmduff(10, S=S, verbose=false) # pre-compile run
+    bench_gcm_helmduff(10, subgrid=subgrid, m=m, sampling=sampling, verbose=false) # pre-compile run
     GC.gc()
-    result = bench_gcm_helmduff(divs, S=S)
+    result = bench_gcm_helmduff(divs, subgrid=subgrid, m=m, sampling=sampling)
     plt = plotbasins(result)
     savefig(plt, joinpath(@__DIR__, "gcm_basin_hd_testm1.png"))
     display(plt)
 end
 
-function test_gcm_spring_column(divs; omega=0.0, S=3)
+function test_gcm_spring_column(divs; omega=0.0, subgrid=[10, 10], m=10, sampling=:random)
     GC.gc()
-    bench_gcm_spring_column(10, omega=omega, S=S, verbose=false) # pre-compile run
+    bench_gcm_spring_column(10, omega=omega, subgrid=subgrid, m=m, sampling=sampling, verbose=false) # pre-compile run
     GC.gc()
-    result = bench_gcm_spring_column(divs, omega=omega, S=S)
+    result = bench_gcm_spring_column(divs, omega=omega, subgrid=subgrid, m=m, sampling=sampling)
     plt = plotbasins(result)
     savefig(plt, joinpath(@__DIR__, "gcm_basin_sc_testm1.png"))
     display(plt)

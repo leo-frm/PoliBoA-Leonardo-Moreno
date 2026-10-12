@@ -1,0 +1,108 @@
+>>> Running GCM with 10x11 grid, subgrid 10x10, m=10, random
+>>> GCM: grid 10x11, subgrid 10x10, m=10 (random, 1100 integrações)
+     10% (11/110 células)
+     20% (22/110 células)
+     30% (33/110 células)
+     40% (44/110 células)
+     50% (55/110 células)
+     60% (66/110 células)
+     70% (77/110 células)
+     80% (88/110 células)
+     90% (99/110 células)
+    100% (110/110 células)
+  0.363431 seconds (88.87 k allocations: 4.320 MiB, 99.83% compilation time)
+>>> Running GCM with 200x222 grid, subgrid 10x10, m=10, random
+>>> GCM: grid 200x222, subgrid 10x10, m=10 (random, 444000 integrações)
+     10% (4440/44400 células)
+     20% (8880/44400 células)
+     30% (13320/44400 células)
+     40% (17760/44400 células)
+     50% (22200/44400 células)
+     60% (26640/44400 células)
+     70% (31080/44400 células)
+     80% (35520/44400 células)
+     90% (39960/44400 células)
+    100% (44400/44400 células)
+  0.020371 seconds (162.05 k allocations: 25.209 MiB, 19.29% gc time)
+Detalhamento dos atratores
+============================================================
+Atrator #1 (Red)
+----------------------------------------
+  Tipo: regular
+  Células na bacia: 4947
+  Pontos no ciclo: 1
+  Pontos do atrator:
+    [1] x1 = +0.264750, x2 = -0.168919
+----------------------------------------
+Atrator #2 (Yellow)
+----------------------------------------
+  Tipo: regular
+  Células na bacia: 5425
+  Pontos no ciclo: 4
+  Pontos do atrator:
+    [1] x1 = -0.747750, x2 = -0.493243
+    [2] x1 = -0.734250, x2 = -0.493243
+    [3] x1 = -0.747750, x2 = -0.479730
+    [4] x1 = -0.734250, x2 = -0.479730
+----------------------------------------
+Atrator #3 (Blue)
+----------------------------------------
+  Tipo: regular
+  Células na bacia: 9332
+  Pontos no ciclo: 1
+  Pontos do atrator:
+    [1] x1 = -0.707250, x2 = +0.114865
+----------------------------------------
+Atrator #4 (Green)
+----------------------------------------
+  Tipo: regular
+  Células na bacia: 24696
+  Pontos no ciclo: 1
+  Pontos do atrator:
+    [1] x1 = +0.845250, x2 = +0.074324
+----------------------------------------
+>>> Running GCM with 10x10 grid, subgrid 10x10, m=10, random
+>>> GCM: grid 10x10, subgrid 10x10, m=10 (random, 1000 integrações)
+     10% (10/100 células)
+     20% (20/100 células)
+     30% (30/100 células)
+     40% (40/100 células)
+     50% (50/100 células)
+     60% (60/100 células)
+     70% (70/100 células)
+     80% (80/100 células)
+     90% (90/100 células)
+    100% (100/100 células)
+  0.059261 seconds (54.55 k allocations: 2.811 MiB, 98.53% compilation time)
+>>> Running GCM with 200x200 grid, subgrid 10x10, m=10, random
+>>> GCM: grid 200x200, subgrid 10x10, m=10 (random, 400000 integrações)
+     10% (4000/40000 células)
+     20% (8000/40000 células)
+     30% (12000/40000 células)
+     40% (16000/40000 células)
+     50% (20000/40000 células)
+     60% (24000/40000 células)
+     70% (28000/40000 células)
+     80% (32000/40000 células)
+     90% (36000/40000 células)
+    100% (40000/40000 células)
+  0.015820 seconds (136.43 k allocations: 13.528 MiB, 31.37% gc time)
+Detalhamento dos atratores
+============================================================
+Atrator #1 (Red)
+----------------------------------------
+  Tipo: regular
+  Células na bacia: 15495
+  Pontos no ciclo: 1
+  Pontos do atrator:
+    [1] x1 = +0.015700, x2 = +0.006500
+----------------------------------------
+Atrator #2 (Yellow)
+----------------------------------------
+  Tipo: regular
+  Células na bacia: 24212
+  Pontos no ciclo: 2
+  Pontos do atrator:
+    [1] x1 = +3.124300, x2 = -0.006500
+    [2] x1 = +3.124300, x2 = +0.006500
+----------------------------------------

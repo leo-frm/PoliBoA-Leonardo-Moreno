@@ -1,4 +1,4 @@
-# Constrói o mapa probabilístico integrando S^d amostras de cada célula
+# Constrói o mapa probabilístico integrando m amostras sorteadas em cada célula
 function build_gcmap(gp :: GcmProblem; verbose :: Bool = true)
     bp = gp.base
     total_cells = prod(bp.region.elements)
@@ -8,8 +8,8 @@ function build_gcmap(gp :: GcmProblem; verbose :: Bool = true)
     integrator = make_gcm_integrator(bp)
 
     if verbose
-        @printf(">>> GCM: grid %s, S=%d (%d amostras/célula, %d integrações)\n",
-            join(bp.region.elements, "x"), gp.samples_per_side, M, total_cells * M)
+        @printf(">>> GCM: grid %s, subgrid %s, m=%d (%s, %d integrações)\n",
+            join(bp.region.elements, "x"), join(gp.subgrid, "x"), M, gp.sampling, total_cells * M)
     end
 
     step_report = max(1, div(total_cells, 10))
@@ -33,10 +33,10 @@ function build_gcmap(gp :: GcmProblem; verbose :: Bool = true)
     return gcm
 end
 
-# Computa as transições de uma única célula: integra as S^d amostras do seu
-# interior e agrupa os destinos. Devolve as células-imagem distintas em ordem
-# crescente e o número de amostras que chegou a cada uma, de modo que
-# sum(counts) == S^d e as probabilidades counts/S^d somam 1 (Hsu, eq. 11.1.1).
+# Computa as transições de uma única célula: integra as m subcélulas sorteadas
+# no seu interior e agrupa os destinos. Devolve as células-imagem distintas em
+# ordem crescente e o número de amostras que chegou a cada uma, de modo que
+# sum(counts) == m e as probabilidades counts/m somam 1 (Hsu, eq. 11.1.1).
 # O destino -1 é a célula sumidouro, que absorve as amostras divergentes: tratá-la
 # como imagem legítima é o que permite a uma célula ter destino misto, situação
 # que o SCM não consegue representar.
@@ -47,16 +47,14 @@ function compute_cell_transition_probabilities(
 ) :: Tuple{Vector{Int32}, Vector{Int32}}
 
     bp = gp.base
-    S = gp.samples_per_side
-    M = samples_per_cell(gp)
 
     u = zeros(Float64, length(bp.region.elements))
 
     images = Int32[]
     counts = Int32[]
 
-    for s in 1:M
-        store_cell_sample!(u, cell_id, bp.region, s, S)
+    for s in select_samples(gp, cell_id)
+        store_cell_sample!(u, cell_id, bp.region, s, gp.subgrid)
         target = map_point(u, integrator, bp)
 
         # Busca linear: o número de imagens distintas é pequeno (tipicamente 1 a 3),

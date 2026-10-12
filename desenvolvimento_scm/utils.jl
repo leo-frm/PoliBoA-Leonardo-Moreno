@@ -166,3 +166,46 @@ function compute_single_cell_mapping(
     target_cell = get_cell_number(integrator.u, bp.region)
     return target_cell
 end
+
+# Integra a trajetória contínua a partir de u0, como no PoliBoA original: transiente
+# seguido de attractor_tolerance períodos, sem voltar ao centro da célula a cada
+# período, com o mesmo integrador do original. Devolve a célula em que a trajetória
+# termina, ou -1 se terminar fora do grid. Usada na análise de agrupamento das
+# soluções periódicas (Hsu §8.2).
+function continuous_trajectory_cell(u0::Vector{Float64}, bp::BasinProblem) :: Int64
+    n_periods = bp.transient_cycles + bp.attractor_tolerance
+    ode_problem = ODEProblem(bp.f, copy(u0), (0.0, bp.period * n_periods), bp.params)
+
+    integrator = init(
+        ode_problem;
+        dense=false,
+        save_everystep=false,
+        save_start=false,
+        maxiters=1e10,
+    )
+    step!(integrator, bp.period * n_periods, true)
+
+    u = copy(integrator.u)
+    adjust_cyclic(u, bp.region.range, bp.region.is_cyclic)
+
+    if !is_inside_range(u, bp.region.range)
+        return -1
+    end
+    return get_cell_number(u, bp.region)
+end
+
+# Dado target[a], o atrator para onde a trajetória contínua do atrator a leva, devolve
+# o representante de cada um: segue as indicações até um atrator que aponta para si
+# mesmo; se elas formarem um ciclo, todos os do ciclo são o mesmo e fica o de menor número
+function cluster_representatives(target::Vector{Int64}) :: Vector{Int64}
+    representative = zeros(Int64, length(target))
+    for a in eachindex(target)
+        path = [a]
+        while target[path[end]] ∉ path
+            push!(path, target[path[end]])
+        end
+        cycle_start = findfirst(==(target[path[end]]), path)
+        representative[a] = minimum(path[cycle_start:end])
+    end
+    return representative
+end

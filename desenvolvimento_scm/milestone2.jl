@@ -82,7 +82,51 @@ function find_attractors_from_scm(scm::SimpleCellMap, bp::BasinProblem) :: Basin
         end
     end
 
+    # Análise de agrupamento (Hsu §8.2): une as soluções periódicas que representam o mesmo atrator
+    attractors = merge_clustered_attractors!(grid, attractors, bp)
+
     return BasinResult(grid, attractors, bp.region)
+end
+
+# Análise de agrupamento das soluções periódicas, parte do método SCM (Hsu §8.2):
+# as soluções periódicas encontradas tendem a se agrupar em torno de cada atrator, e a
+# bacia do atrator é a união das bacias do agrupamento. Quando o ponto de um atrator fica
+# muito perto da fronteira entre duas células, o centro da célula vizinha também
+# pode ser mapeado em si mesmo, e o mapa passa a ter duas soluções periódicas para
+# um único atrator; a bacia do atrator é a união das bacias delas. Para reconhecê-las,
+# integra-se a trajetória contínua a partir de cada atrator, como no PoliBoA original:
+# se ela termina na bacia de outro atrator, os dois são o mesmo e as bacias são unidas.
+# Atratores distintos não são unidos, por mais próximos que estejam: a trajetória
+# contínua de cada um permanece nele.
+function merge_clustered_attractors!(grid, attractors::Vector{Attractor}, bp::BasinProblem) :: Vector{Attractor}
+    # Atrator em cuja bacia termina a trajetória contínua de cada atrator
+    target = collect(1:length(attractors))
+    for attr in attractors
+        cell = continuous_trajectory_cell(attr.points[1], bp)
+        if cell > 0 && grid[cell] > 0
+            target[attr.number] = grid[cell]
+        end
+    end
+
+    representative = cluster_representatives(target)
+
+    # Renumera os atratores que sobram em ordem crescente e reatribui as bacias
+    new_number = Dict(old => k for (k, old) in enumerate(sort(unique(representative))))
+    for c in eachindex(grid)
+        if grid[c] > 0
+            grid[c] = new_number[representative[grid[c]]]
+        end
+    end
+
+    merged = Attractor[]
+    for attr in attractors
+        if representative[attr.number] == attr.number
+            attr.number = new_number[attr.number]
+            push!(merged, attr)
+        end
+    end
+
+    return merged
 end
 
 #function trace_trajectory_in_map(u, region::mapSimpleCell) :: Int64 -> Embutida em find_attractors_from_scm por enquanto
