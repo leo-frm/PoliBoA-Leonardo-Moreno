@@ -1,0 +1,26 @@
+>>> Running SCM with 10x10 grid
+  0.175109 seconds (51.47 k allocations: 2.539 MiB, 99.57% compilation time)
+>>> Running SCM with 200x200 grid
+  0.011445 seconds (355.98 k allocations: 9.963 MiB)
+Detalhamento dos atratores
+============================================================
+Atrator #1 (Red)
+----------------------------------------
+  Tipo: regular
+  Células na bacia: 19443
+  Pontos no ciclo: 2
+  Pontos do atrator:
+    [1] x1 = -2.466150, x2 = +1.155000
+    [2] x1 = -2.214823, x2 = +1.335000
+----------------------------------------
+Atrator #2 (Yellow)
+----------------------------------------
+  Tipo: regular
+  Células na bacia: 20557
+  Pontos no ciclo: 4
+  Pontos do atrator:
+    [1] x1 = -0.298451, x2 = +1.995000
+    [2] x1 = -0.141372, x2 = +1.935000
+    [3] x1 = -0.235619, x2 = +1.965000
+    [4] x1 = -0.267035, x2 = +1.995000
+----------------------------------------

@@ -1,0 +1,8 @@
+>>> Running GCM with 10x10 grid, subgrid 10x10, m=10, random (1 thread)
+  0.395562 seconds (88.84 k allocations: 4.319 MiB, 99.80% compilation time)
+>>> Running GCM with 200x200 grid, subgrid 10x10, m=10, random (1 thread)
+  0.021220 seconds (135.09 k allocations: 29.030 MiB, 13.25% gc time)
+>>> Running GCM with 10x10 grid, subgrid 10x10, m=10, random (4 threads)
+  0.000728 seconds (574 allocations: 34.266 KiB)
+>>> Running GCM with 200x200 grid, subgrid 10x10, m=10, random (4 threads)
+  0.019641 seconds (135.09 k allocations: 29.030 MiB, 10.17% gc time)

@@ -1,0 +1,8 @@
+>>> Running SCM with 10x10 grid (1 thread)
+  0.179298 seconds (51.47 k allocations: 2.539 MiB, 99.59% compilation time)
+>>> Running SCM with 200x200 grid (1 thread)
+  0.009638 seconds (355.98 k allocations: 9.963 MiB)
+>>> Running SCM with 10x10 grid (4 threads)
+  0.000561 seconds (460 allocations: 26.500 KiB)
+>>> Running SCM with 200x200 grid (4 threads)
+  0.010577 seconds (356.65 k allocations: 9.989 MiB)

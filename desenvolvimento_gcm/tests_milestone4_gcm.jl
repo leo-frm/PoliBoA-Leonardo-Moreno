@@ -30,6 +30,12 @@ function spring_column!(dx, x, (c, p, alpha, q, q1, omega), t)
     dx[2] = -c * x[2] + p * sin(x[1]) - (1 - 1 / sqrt(1 + alpha * sin(x[1])) - (q + q1 * sin(omega * t))) * cos(x[1])
 end
 
+# Pêndulo amortecido forçado (servomech do python-control, adimensionalizado)
+function pendulum!(dx, x, (c, F, Ω), t)
+    dx[1] = x[2]
+    dx[2] = -c * x[2] - sin(x[1]) + F * cos(Ω * t)
+end
+
 # Visualização
 function plotbasins(result::BasinResult)
     theme(:juno)
@@ -143,6 +149,39 @@ function bench_gcm_spring_column_p(divs; omega=0.0, subgrid=[10, 10], m=10, samp
     return result
 end
 
+function bench_gcm_pendulum_p(divs; c=0.5, F=1.07, Ω=2/3, subgrid=[10, 10], m=10, sampling=:random, verbose=false, threads=1)
+    region = BasinRegion(
+        [[-pi, pi], [-3.0, 3.0]],
+        [divs, divs],
+        [true, false],
+        [[-pi, pi],[-5.0, 5.0]],
+    )
+
+    bp = BasinProblem(
+        pendulum!,
+        [c, F, Ω],
+        2*pi/Ω,
+        10,
+        1000,
+        20,
+        80,
+        region,
+        threads,
+    )
+
+    gp = GcmProblem(bp, subgrid, m; sampling=sampling)
+
+    println(">>> Running GCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid, subgrid $(join(subgrid, "x")), m=$m, $(sampling) ($(threads) thread$(threads>1 ? "s" : ""))")
+    gcm = build_gcmap_parallel(gp)
+    @time result = find_attractors_from_gcm(gcm, gp)
+
+    if verbose
+        report_attractors(result)
+    end
+
+    return result
+end
+
 # Test functions for parallel testing
 function test_gcm_helmduff_p(divs; subgrid=[10, 10], m=10, sampling=:random, threads=1)
     GC.gc()
@@ -164,7 +203,20 @@ function test_gcm_spring_column_p(divs; omega=0.0, subgrid=[10, 10], m=10, sampl
     display(plt)
 end
 
+function test_gcm_pendulum_p(divs; c=0.5, F=1.07, Ω=2/3, subgrid=[10, 10], m=10, sampling=:random, threads=1)
+    GC.gc()
+    bench_gcm_pendulum_p(10, c=c, F=F, Ω=Ω, subgrid=subgrid, m=m, sampling=sampling, verbose=false, threads=threads) # pre-compile run
+    GC.gc()
+    result = bench_gcm_pendulum_p(divs, c=c, F=F, Ω=Ω, subgrid=subgrid, m=m, sampling=sampling, threads=threads)
+    plt = plotbasins(result)
+    plot!(plt, dpi=300)
+    savefig(plt, joinpath(@__DIR__, "..", "ZZ - Extra", "pend_gcm_$(divs)x$(divs)_m4.png"))
+    display(plt)
+end
+
 test_gcm_helmduff_p(200, threads=1)
 test_gcm_helmduff_p(200, threads=4)
 test_gcm_spring_column_p(200, threads=1)
 test_gcm_spring_column_p(200, threads=4)
+test_gcm_pendulum_p(200, threads=1)
+test_gcm_pendulum_p(200, threads=4)

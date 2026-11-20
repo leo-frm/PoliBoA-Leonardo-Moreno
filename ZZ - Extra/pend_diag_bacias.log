@@ -1,0 +1,28 @@
+Atratores de referência (Vern9 1e-10, período 2):
+  R1: (-2.2077, 1.3461) (-2.4770, 1.1494)
+  R2: (-0.3202, 1.9912) (-0.1467, 1.9246)
+
+Órbita estroboscópica com o integrador do original, a partir de R1, períodos 389–400:
+  (-2.1991, 1.3520)  (-2.4746, 1.1510)  (-2.2119, 1.3429)  (-2.4742, 1.1514)
+  (-2.1589, 1.3800)  (-2.4841, 1.1436)  (-2.1881, 1.3597)  (-2.4777, 1.1486)
+  (-2.2072, 1.3463)  (-2.4772, 1.1492)  (-2.2001, 1.3514)  (-2.4062, 1.2016)
+
+Referência: 5.7 s; R1 19119 células (0.4780), R2 20881 (0.5220), sem convergir 0; períodos até convergir: mediana 19, máx 117
+Células de fronteira na referência (vizinhança 3×3): 29307 (73.27%)
+
+Concordância com a referência (compare_basins = mesma regra de mapeamento):
+  Original, 1 thread(s)              2 atr. | bacias 0.512/0.488 | × ref: total 71.98%, interior 98.21%, fronteira 62.40%
+  Original, 4 thread(s)              4 atr. | bacias 0.125/0.494/0.247/0.134 | × ref: total 53.10%, interior 69.03%, fronteira 47.29%
+  SCM, 1 thread(s)                   2 atr. | bacias 0.486/0.514 | × ref: total 72.02%, interior 97.52%, fronteira 62.72%
+  SCM, 4 thread(s)                   2 atr. | bacias 0.479/0.521 | × ref: total 71.96%, interior 97.73%, fronteira 62.56%
+  GCM, 4 threads                     2 atr. | bacias 0.495/0.505 | × ref: total 71.79%, interior 99.08%, fronteira 61.83%
+  SCM + reset_dt (variante), 1 thr   3 atr. | bacias 0.485/0.312/0.203 | × ref: total 58.33%, interior 75.40%, fronteira 52.10%
+  SCM + reset_dt (variante), 4 thr   3 atr. | bacias 0.485/0.312/0.203 | × ref: total 58.33%, interior 75.40%, fronteira 52.10%
+
+Reprodutibilidade (compare_basins entre execuções):
+  og1    × og4     0.5530
+  scm1   × scm4    0.7671
+  scmR1  × scmR4   1.0000
+  og1    × scm1    0.7137
+  og1    × gcm     0.7063
+  scm1   × gcm     0.7036

@@ -1,0 +1,9 @@
+== A partir dos pontos dos atratores do original (pend_og_m1.log) ==
+  #1, Vern9 1e-12                      período 2; pontos: (-2.2077, 1.3461) (-2.4770, 1.1494)
+  #1, integrador do original (padrão)  período 0; pontos: (-2.3765, 1.2244)
+  #2, Vern9 1e-12                      período 2; pontos: (-0.3202, 1.9912) (-0.1467, 1.9246)
+  #2, integrador do original (padrão)  período 0; pontos: (-0.2496, 1.9724)
+
+== 1000 condições iniciais aleatórias em [-π,π]×[-3,3], Vern9 1e-12, 400 períodos ==
+  atrator 1: período 2,  465/1000 CIs; pontos: (-2.2077, 1.3461) (-2.4770, 1.1494)
+  atrator 2: período 2,  535/1000 CIs; pontos: (-0.1467, 1.9246) (-0.3202, 1.9912)

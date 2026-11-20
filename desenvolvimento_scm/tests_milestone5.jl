@@ -30,6 +30,12 @@ function spring_column!(dx, x, (c, p, alpha, q, q1, omega), t)
     dx[2] = -c * x[2] + p * sin(x[1]) - (1 - 1 / sqrt(1 + alpha * sin(x[1])) - (q + q1 * sin(omega * t))) * cos(x[1])
 end
 
+# Pêndulo amortecido forçado (servomech do python-control, adimensionalizado)
+function pendulum!(dx, x, (c, F, Ω), t)
+    dx[1] = x[2]
+    dx[2] = -c * x[2] - sin(x[1]) + F * cos(Ω * t)
+end
+
 function make_helmduff_bp(divs; e=0.077, threads=1)
     region = BasinRegion(
         [[-1.2, 1.5], [-1.5, 1.5]],
@@ -64,6 +70,27 @@ function make_spring_column_bp(divs; omega=0.0, threads=1)
         [0.01, 0.05, 0.8, 0.01, 0.05, omega],
         7.853981634,
         100,
+        1000,
+        20,
+        80,
+        region,
+        threads,
+    )
+end
+
+function make_pendulum_bp(divs; c=0.5, F=1.07, Ω=2/3, threads=1)
+    region = BasinRegion(
+        [[-pi, pi], [-3.0, 3.0]],
+        [divs, divs],
+        [true, false],
+        [[-pi, pi], [-5.0, 5.0]],
+    )
+
+    return BasinProblem(
+        pendulum!,
+        [c, F, Ω],
+        2*pi/Ω,
+        10,
         1000,
         20,
         80,
@@ -231,6 +258,20 @@ test_memory_scaling(divs_range=[100, 200, 400], make_bp=make_spring_column_bp, l
 test_thread_scaling(divs=200, trials=3, make_bp=make_spring_column_bp, label="Spring Column")
 
 # =============================================================================
+# EXECUÇÃO — PÊNDULO FORÇADO
+# =============================================================================
+
+println("\n" * "▓" ^ 60)
+println("▓  PÊNDULO FORÇADO")
+println("▓" ^ 60)
+
+bench_pend  = test_benchmark_scm(divs=200, trials=3, make_bp=make_pendulum_bp, label="Pêndulo forçado")
+match_pend  = test_compare_basins(divs=200, make_bp=make_pendulum_bp, label="Pêndulo forçado")
+ratios_pend = test_compare_benchmarks(divs=200, trials=3, make_bp=make_pendulum_bp, label="Pêndulo forçado")
+test_memory_scaling(divs_range=[100, 200, 400], make_bp=make_pendulum_bp, label="Pêndulo forçado")
+test_thread_scaling(divs=200, trials=3, make_bp=make_pendulum_bp, label="Pêndulo forçado")
+
+# =============================================================================
 # OUTPUT
 # =============================================================================
 println("\n" * "=" ^ 60)
@@ -238,5 +279,6 @@ println("Resumo Final")
 println("=" ^ 60)
 @printf("  [HD] match_fraction:  %.4f | tempo médio: %.4f s\n", match_hd, bench_hd.mean_time_s)
 @printf("  [SC] match_fraction:  %.4f | tempo médio: %.4f s\n", match_sc, bench_sc.mean_time_s)
+@printf("  [PEND] match_fraction:  %.4f | tempo médio: %.4f s\n", match_pend, bench_pend.mean_time_s)
 println("=" ^ 60)
 println("Done.")

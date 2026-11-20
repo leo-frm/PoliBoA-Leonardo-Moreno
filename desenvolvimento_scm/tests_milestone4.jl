@@ -27,6 +27,12 @@ function spring_column!(dx, x, (c, p, alpha, q, q1, omega), t)
     dx[2] = -c * x[2] + p * sin(x[1]) - (1 - 1 / sqrt(1 + alpha * sin(x[1])) - (q + q1 * sin(omega * t))) * cos(x[1])
 end
 
+# Pêndulo amortecido forçado (servomech do python-control, adimensionalizado)
+function pendulum!(dx, x, (c, F, Ω), t)
+    dx[1] = x[2]
+    dx[2] = -c * x[2] - sin(x[1]) + F * cos(Ω * t)
+end
+
 # Visualização
 function plotbasins(result::BasinResult)
     theme(:juno)
@@ -136,6 +142,37 @@ function bench_scm_spring_column_p(divs; omega=0.0, verbose=false, threads=1)
     return result
 end
 
+function bench_scm_pendulum_p(divs; c=0.5, F=1.07, Ω=2/3, verbose=false, threads=1)
+    region = BasinRegion(
+        [[-pi, pi], [-3.0, 3.0]],
+        [divs, divs],
+        [true, false],
+        [[-pi, pi],[-5.0, 5.0]],
+    )
+
+    bp = BasinProblem(
+        pendulum!,
+        [c, F, Ω],
+        2*pi/Ω,
+        10,
+        1000,
+        20,
+        80,
+        region,
+        threads,
+    )
+
+    println(">>> Running SCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid ($(threads) thread$(threads>1 ? "s" : ""))")
+    scm = build_scmap_parallel(bp)
+    @time result = find_attractors_from_scm(scm, bp)
+
+    if verbose
+        report_attractors(result)
+    end
+
+    return result
+end
+
 # Test functions for parallel testing
 function test_scm_helmduff_p(divs; threads=1)
     GC.gc()
@@ -157,7 +194,20 @@ function test_scm_spring_column_p(divs; omega=0.0, threads=1)
     display(plt)
 end
 
+function test_scm_pendulum_p(divs; c=0.5, F=1.07, Ω=2/3, threads=1)
+    GC.gc()
+    bench_scm_pendulum_p(10, c=c, F=F, Ω=Ω, verbose=false, threads=threads) # pre-compile run
+    GC.gc()
+    result = bench_scm_pendulum_p(divs, c=c, F=F, Ω=Ω, threads=threads)
+    plt = plotbasins(result)
+    plot!(plt, dpi=300)
+    savefig(plt, joinpath(@__DIR__, "..", "ZZ - Extra", "pend_scm_$(divs)x$(divs)_m4.png"))
+    display(plt)
+end
+
 test_scm_helmduff_p(200, threads=1)
 test_scm_helmduff_p(200, threads=4)
 test_scm_spring_column_p(200, threads=1)
 test_scm_spring_column_p(200, threads=4)
+test_scm_pendulum_p(200, threads=1)
+test_scm_pendulum_p(200, threads=4)

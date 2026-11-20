@@ -29,6 +29,12 @@ function spring_column!(dx, x, (c, p, alpha, q, q1, omega), t)
     dx[2] = -c * x[2] + p * sin(x[1]) - (1 - 1 / sqrt(1 + alpha * sin(x[1])) - (q + q1 * sin(omega * t))) * cos(x[1])
 end
 
+# Pêndulo amortecido forçado (servomech do python-control, adimensionalizado)
+function pendulum!(dx, x, (c, F, Ω), t)
+    dx[1] = x[2]
+    dx[2] = -c * x[2] - sin(x[1]) + F * cos(Ω * t)
+end
+
 # Visualização
 function plotbasins(result::BasinResult)
     theme(:juno)
@@ -142,6 +148,39 @@ function bench_gcm_spring_column(divs; omega=0.0, subgrid=[10, 10], m=10, sampli
     return result
 end
 
+function bench_gcm_pendulum(divs; c=0.5, F=1.07, Ω=2/3, subgrid=[10, 10], m=10, sampling=:random, verbose=true)
+    region = BasinRegion(
+        [[-pi, pi], [-3.0, 3.0]],
+        [divs, divs],
+        [true, false],
+        [[-pi, pi],[-5.0, 5.0]],
+    )
+
+    bp = BasinProblem(
+        pendulum!,
+        [c, F, Ω],
+        2*pi/Ω,
+        10,
+        1000,
+        20,
+        80,
+        region,
+        1,
+    )
+
+    gp = GcmProblem(bp, subgrid, m; sampling=sampling)
+
+    println(">>> Running GCM with $(bp.region.elements[1])x$(bp.region.elements[2]) grid, subgrid $(join(subgrid, "x")), m=$m, $(sampling)")
+    gcm = build_gcmap(gp)
+    @time result = find_attractors_from_gcm(gcm, gp)
+
+    if verbose
+        report_attractors(result)
+    end
+
+    return result
+end
+
 # Test functions
 function test_gcm_helmduff(divs; subgrid=[10, 10], m=10, sampling=:random)
     GC.gc()
@@ -163,5 +202,17 @@ function test_gcm_spring_column(divs; omega=0.0, subgrid=[10, 10], m=10, samplin
     display(plt)
 end
 
+function test_gcm_pendulum(divs; c=0.5, F=1.07, Ω=2/3, subgrid=[10, 10], m=10, sampling=:random)
+    GC.gc()
+    bench_gcm_pendulum(10, c=c, F=F, Ω=Ω, subgrid=subgrid, m=m, sampling=sampling, verbose=false) # pre-compile run
+    GC.gc()
+    result = bench_gcm_pendulum(divs, c=c, F=F, Ω=Ω, subgrid=subgrid, m=m, sampling=sampling)
+    plt = plotbasins(result)
+    plot!(plt, dpi=300)
+    savefig(plt, joinpath(@__DIR__, "..", "ZZ - Extra", "pend_gcm_$(divs)x$(divs)_m1.png"))
+    display(plt)
+end
+
 test_gcm_helmduff(200)
 test_gcm_spring_column(200)
+test_gcm_pendulum(200)

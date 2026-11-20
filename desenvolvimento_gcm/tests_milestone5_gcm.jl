@@ -38,6 +38,12 @@ function spring_column!(dx, x, (c, p, alpha, q, q1, omega), t)
     dx[2] = -c * x[2] + p * sin(x[1]) - (1 - 1 / sqrt(1 + alpha * sin(x[1])) - (q + q1 * sin(omega * t))) * cos(x[1])
 end
 
+# Pêndulo amortecido forçado (servomech do python-control, adimensionalizado)
+function pendulum!(dx, x, (c, F, Ω), t)
+    dx[1] = x[2]
+    dx[2] = -c * x[2] - sin(x[1]) + F * cos(Ω * t)
+end
+
 make_helmduff_bp(divs::Int; e=0.077, threads=1) = make_helmduff_bp([divs, floor(Int64, (3.0/2.7) * divs)]; e=e, threads=threads)
 
 function make_helmduff_bp(elements::Vector{Int64}; e=0.077, threads=1)
@@ -84,10 +90,35 @@ function make_spring_column_bp(elements::Vector{Int64}; omega=0.0, threads=1)
     )
 end
 
+make_pendulum_bp(divs::Int; c=0.5, F=1.07, Ω=2/3, threads=1) = make_pendulum_bp([divs, divs]; c=c, F=F, Ω=Ω, threads=threads)
+
+function make_pendulum_bp(elements::Vector{Int64}; c=0.5, F=1.07, Ω=2/3, threads=1)
+    region = BasinRegion(
+        [[-pi, pi], [-3.0, 3.0]],
+        elements,
+        [true, false],
+        [[-pi, pi], [-5.0, 5.0]],
+    )
+
+    return BasinProblem(
+        pendulum!,
+        [c, F, Ω],
+        2*pi/Ω,
+        10,
+        1000,
+        20,
+        80,
+        region,
+        threads,
+    )
+end
+
 make_helmduff_gp(divs; subgrid=[10, 10], m=10, sampling=:random, threads=1) =
     GcmProblem(make_helmduff_bp(divs, threads=threads), subgrid, m; sampling=sampling)
 make_spring_column_gp(divs; subgrid=[10, 10], m=10, sampling=:random, threads=1) =
     GcmProblem(make_spring_column_bp(divs, threads=threads), subgrid, m; sampling=sampling)
+make_pendulum_gp(divs; subgrid=[10, 10], m=10, sampling=:random, threads=1) =
+    GcmProblem(make_pendulum_bp(divs, threads=threads), subgrid, m; sampling=sampling)
 
 """Roda o pipeline GCM completo (build + find_attractors) e retorna o GCM."""
 function run_gcm(gp::GcmProblem)
@@ -312,6 +343,20 @@ test_memory_scaling(divs_range=[100, 200, 400], subgrid=[10, 10], m=10, make_gp=
 test_thread_scaling(divs=200, subgrid=[10, 10], m=10, trials=3, make_gp=make_spring_column_gp, label="Spring Column")
 
 # =============================================================================
+# EXECUÇÃO — PÊNDULO FORÇADO
+# =============================================================================
+
+println("\n" * "▓" ^ 60)
+println("▓  PÊNDULO FORÇADO")
+println("▓" ^ 60)
+
+bench_pend  = test_benchmark_gcm(divs=200, subgrid=[10, 10], m=10, trials=3, make_gp=make_pendulum_gp, label="Pêndulo forçado")
+match_pend  = test_compare_basins(divs=200, subgrid=[10, 10], m=10, make_gp=make_pendulum_gp, label="Pêndulo forçado")
+ratios_pend = test_compare_benchmarks(divs=200, subgrid=[10, 10], m=10, trials=3, make_gp=make_pendulum_gp, label="Pêndulo forçado")
+test_memory_scaling(divs_range=[100, 200, 400], subgrid=[10, 10], m=10, make_gp=make_pendulum_gp, label="Pêndulo forçado")
+test_thread_scaling(divs=200, subgrid=[10, 10], m=10, trials=3, make_gp=make_pendulum_gp, label="Pêndulo forçado")
+
+# =============================================================================
 # EXECUÇÃO — TESTE 6 (por último: o fino 1000×1000 é caro)
 # =============================================================================
 
@@ -335,5 +380,9 @@ println("=" ^ 60)
     match_sc.match_og, match_sc.match_scm, bench_sc.mean_time_s)
 @printf("  [SC] concordância no domicílio único vs Original: %.4f | fronteira: %.2f%% das células\n",
     match_sc.dom_og.single, 100 * match_sc.dom_og.frac_multiple)
+@printf("  [PEND] match vs Original: %.4f | vs SCM: %.4f | tempo médio: %.4f s\n",
+    match_pend.match_og, match_pend.match_scm, bench_pend.mean_time_s)
+@printf("  [PEND] concordância no domicílio único vs Original: %.4f | fronteira: %.2f%% das células\n",
+    match_pend.dom_og.single, 100 * match_pend.dom_og.frac_multiple)
 println("=" ^ 60)
 println("Done.")
